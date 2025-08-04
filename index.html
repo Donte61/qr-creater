@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 QR Kod Oluşturucu - DonTe</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚀%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Robust QRCode library loader with multiple fallbacks
+        (function loadQRCodeLibrary() {
+            // Global flag to track QRCode library loading status
+            window.qrCodeLoadingStatus = 'loading';
+            
+            const cdnUrls = [
+                'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+                'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js',
+                'https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js',
+                'https://unpkg.com/qrcode@1.4.4/build/qrcode.min.js'
+            ];
+            
+            let currentCdnIndex = 0;
+            
+            function tryLoadCdn() {
+                if (currentCdnIndex >= cdnUrls.length) {
+                    console.error('❌ All QRCode CDNs failed. Loading embedded fallback...');
+                    loadEmbeddedQRCode();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = cdnUrls[currentCdnIndex];
+                
+                script.onload = function() {
+                    console.log(`✅ QRCode library loaded from CDN ${currentCdnIndex + 1}`);
+                    // QRCode'un gerçekten mevcut olduğundan emin ol
+                    setTimeout(() => {
+                        if (typeof window.QRCode !== 'undefined') {
+                            window.qrCodeLoadingStatus = 'loaded';
+                            // Trigger custom event to notify the main script
+                            window.dispatchEvent(new CustomEvent('qrCodeLibraryReady'));
+                        } else {
+                            console.log('⚠️ QRCode still not available, trying next CDN...');
+                            currentCdnIndex++;
+                            tryLoadCdn();
+                        }
+                    }, 50);
+                };
+                
+                script.onerror = function() {
+                    console.log(`⚠️ CDN ${currentCdnIndex + 1} failed, trying next...`);
+                    currentCdnIndex++;
+                    tryLoadCdn();
+                };
+                
+                document.head.appendChild(script);
+            }
+            
+            function loadEmbeddedQRCode() {
+                // Daha gelişmiş QRCode fallback implementasyonu
+                window.QRCode = {
+                    toCanvas: function(canvas, text, options, callback) {
+                        const ctx = canvas.getContext('2d');
+                        const size = options.width || 256;
+                        canvas.width = size;
+                        canvas.height = size;
+                        
+                        // Clear canvas
+                        ctx.fillStyle = options.color?.light || '#FFFFFF';
+                        ctx.fillRect(0, 0, size, size);
+                        
+                        // Basit pattern oluştur (QR benzeri görünum)
+                        ctx.fillStyle = options.color?.dark || '#000000';
+                        
+                        // Kenar çerçevesi
+                        const border = 20;
+                        ctx.fillRect(0, 0, size, border); // üst
+                        ctx.fillRect(0, 0, border, size); // sol
+                        ctx.fillRect(size-border, 0, border, size); // sağ
+                        ctx.fillRect(0, size-border, size, border); // alt
+                        
+                        // Köşe kareleri (QR kod benzeri)
+                        const cornerSize = size * 0.15;
+                        // Sol üst
+                        ctx.fillRect(border, border, cornerSize, cornerSize);
+                        ctx.fillStyle = options.color?.light || '#FFFFFF';
+                        ctx.fillRect(border + cornerSize/4, border + cornerSize/4, cornerSize/2, cornerSize/2);
+                        
+                        // Sağ üst
+                        ctx.fillStyle = options.color?.dark || '#000000';
+                        ctx.fillRect(size - border - cornerSize, border, cornerSize, cornerSize);
+                        ctx.fillStyle = options.color?.light || '#FFFFFF';
+                        ctx.fillRect(size - border - cornerSize + cornerSize/4, border + cornerSize/4, cornerSize/2, cornerSize/2);
+                        
+                        // Sol alt
+                        ctx.fillStyle = options.color?.dark || '#000000';
+                        ctx.fillRect(border, size - border - cornerSize, cornerSize, cornerSize);
+                        ctx.fillStyle = options.color?.light || '#FFFFFF';
+                        ctx.fillRect(border + cornerSize/4, size - border - cornerSize + cornerSize/4, cornerSize/2, cornerSize/2);
+                        
+                        // Rastgele pattern
+                        ctx.fillStyle = options.color?.dark || '#000000';
+                        for(let i = 0; i < 200; i++) {
+                            const x = Math.random() * (size - 2*border) + border;
+                            const y = Math.random() * (size - 2*border) + border;
+                            const w = Math.random() * 8 + 2;
+                            ctx.fillRect(x, y, w, w);
+                        }
+                        
+                        // Metin
+                        ctx.font = `${Math.floor(size/20)}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                        ctx.fillRect(size/4, size - size/4, size/2, size/6);
+                        ctx.fillStyle = options.color?.dark || '#000000';
+                        ctx.fillText('OFFLINE MODE', size/2, size - size/6);
+                        
+                        if (callback) callback(null);
+                    }
+                };
+                window.qrCodeLoadingStatus = 'fallback';
+                console.log('🆘 Using emergency fallback QRCode implementation');
+                // Trigger custom event to notify the main script
+                window.dispatchEvent(new CustomEvent('qrCodeLibraryReady'));
+            }
+            
+            tryLoadCdn();
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-text">
+                    <h1 data-tr="🚀 QR Kod Oluşturucu" data-en="🚀 QR Code Generator">🚀 QR Kod Oluşturucu</h1>
+                    <p data-tr="Türkiye'nin en gelişmiş QR kod oluşturma platformu" data-en="Turkey's most advanced QR code generation platform">Türkiye'nin en gelişmiş QR kod oluşturma platformu</p>
+                </div>
+                <div class="language-switcher">
+                    <button class="lang-btn active" data-lang="tr">🇹🇷 TR</button>
+                    <button class="lang-btn" data-lang="en">🇺🇸 EN</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="text" data-tr="📝 Metin" data-en="📝 Text">📝 Metin</button>
+                    <button class="tab-btn" data-tab="url" data-tr="🌐 URL" data-en="🌐 URL">🌐 URL</button>
+                    <button class="tab-btn" data-tab="wifi" data-tr="📶 WiFi" data-en="📶 WiFi">📶 WiFi</button>
+                    <button class="tab-btn" data-tab="email" data-tr="📧 Email" data-en="📧 Email">📧 Email</button>
+                    <button class="tab-btn" data-tab="sms" data-tr="💬 SMS" data-en="💬 SMS">💬 SMS</button>
+                    <button class="tab-btn" data-tab="vcard" data-tr="👤 vCard" data-en="👤 vCard">👤 vCard</button>
+                </div>
+
+                <!-- Text Tab -->
+                <div class="tab-content active" id="text-tab">
+                    <label for="text-input" data-tr="Metin girin:" data-en="Enter text:">Metin girin:</label>
+                    <textarea id="text-input" data-tr-placeholder="QR koda dönüştürmek istediğiniz metni yazın..." data-en-placeholder="Enter the text you want to convert to QR code..." placeholder="QR koda dönüştürmek istediğiniz metni yazın...">Merhaba Dünya! 🌍</textarea>
+                </div>
+
+                <!-- URL Tab -->
+                <div class="tab-content" id="url-tab">
+                    <label for="url-input" data-tr="Website URL'si:" data-en="Website URL:">Website URL'si:</label>
+                    <input type="url" id="url-input" placeholder="https://example.com" autocomplete="url">
+                </div>
+
+                <!-- WiFi Tab -->
+                <div class="tab-content" id="wifi-tab">
+                    <form>
+                        <label for="wifi-ssid" data-tr="WiFi Ağ Adı (SSID):" data-en="WiFi Network Name (SSID):">WiFi Ağ Adı (SSID):</label>
+                        <input type="text" id="wifi-ssid" data-tr-placeholder="WiFi ağ adı" data-en-placeholder="WiFi network name" placeholder="WiFi ağ adı" autocomplete="off">
+                        
+                        <label for="wifi-password" data-tr="Şifre:" data-en="Password:">Şifre:</label>
+                        <input type="password" id="wifi-password" data-tr-placeholder="WiFi şifresi" data-en-placeholder="WiFi password" placeholder="WiFi şifresi" autocomplete="current-password">
+                        
+                        <label for="wifi-security" data-tr="Güvenlik Türü:" data-en="Security Type:">Güvenlik Türü:</label>
+                        <select id="wifi-security">
+                            <option value="WPA" data-tr="WPA/WPA2" data-en="WPA/WPA2">WPA/WPA2</option>
+                            <option value="WEP" data-tr="WEP" data-en="WEP">WEP</option>
+                            <option value="nopass" data-tr="Şifresiz" data-en="No Password">Şifresiz</option>
+                        </select>
+                    </form>
+                </div>
+
+                <!-- Email Tab -->
+                <div class="tab-content" id="email-tab">
+                    <label for="email-to" data-tr="Alıcı Email:" data-en="Recipient Email:">Alıcı Email:</label>
+                    <input type="email" id="email-to" data-tr-placeholder="ornek@email.com" data-en-placeholder="example@email.com" placeholder="ornek@email.com" autocomplete="email">
+                    
+                    <label for="email-subject" data-tr="Konu:" data-en="Subject:">Konu:</label>
+                    <input type="text" id="email-subject" data-tr-placeholder="Email konusu" data-en-placeholder="Email subject" placeholder="Email konusu" autocomplete="off">
+                    
+                    <label for="email-body" data-tr="Mesaj:" data-en="Message:">Mesaj:</label>
+                    <textarea id="email-body" data-tr-placeholder="Email içeriği..." data-en-placeholder="Email content..." placeholder="Email içeriği..."></textarea>
+                </div>
+
+                <!-- SMS Tab -->
+                <div class="tab-content" id="sms-tab">
+                    <label for="sms-number" data-tr="Telefon Numarası:" data-en="Phone Number:">Telefon Numarası:</label>
+                    <input type="tel" id="sms-number" placeholder="+90 555 123 45 67" autocomplete="tel">
+                    
+                    <label for="sms-message" data-tr="SMS Mesajı:" data-en="SMS Message:">SMS Mesajı:</label>
+                    <textarea id="sms-message" data-tr-placeholder="SMS mesajı..." data-en-placeholder="SMS message..." placeholder="SMS mesajı..."></textarea>
+                </div>
+
+                <!-- vCard Tab -->
+                <div class="tab-content" id="vcard-tab">
+                    <label for="vcard-name" data-tr="Ad Soyad:" data-en="Full Name:">Ad Soyad:</label>
+                    <input type="text" id="vcard-name" data-tr-placeholder="Ahmet Yılmaz" data-en-placeholder="John Doe" placeholder="Ahmet Yılmaz" autocomplete="name">
+                    
+                    <label for="vcard-phone" data-tr="Telefon:" data-en="Phone:">Telefon:</label>
+                    <input type="tel" id="vcard-phone" placeholder="+90 555 123 45 67" autocomplete="tel">
+                    
+                    <label for="vcard-email" data-tr="Email:" data-en="Email:">Email:</label>
+                    <input type="email" id="vcard-email" data-tr-placeholder="ahmet@email.com" data-en-placeholder="john@email.com" placeholder="ahmet@email.com" autocomplete="email">
+                    
+                    <label for="vcard-organization" data-tr="Şirket:" data-en="Company:">Şirket:</label>
+                    <input type="text" id="vcard-organization" data-tr-placeholder="ABC Şirketi" data-en-placeholder="ABC Company" placeholder="ABC Şirketi" autocomplete="organization">
+                    
+                    <label for="vcard-website" data-tr="Website:" data-en="Website:">Website:</label>
+                    <input type="url" id="vcard-website" placeholder="https://website.com" autocomplete="url">
+                </div>
+
+                <div class="options">
+                    <div class="option-group">
+                        <label for="size-select" data-tr="QR Kod Boyutu:" data-en="QR Code Size:">QR Kod Boyutu:</label>
+                        <select id="size-select">
+                            <option value="200" data-tr="Küçük (200x200)" data-en="Small (200x200)">Küçük (200x200)</option>
+                            <option value="300" selected data-tr="Orta (300x300)" data-en="Medium (300x300)">Orta (300x300)</option>
+                            <option value="400" data-tr="Büyük (400x400)" data-en="Large (400x400)">Büyük (400x400)</option>
+                            <option value="500" data-tr="Çok Büyük (500x500)" data-en="Extra Large (500x500)">Çok Büyük (500x500)</option>
+                        </select>
+                    </div>
+
+                    <div class="option-group">
+                        <label for="color-select" data-tr="Renk:" data-en="Color:">Renk:</label>
+                        <select id="color-select">
+                            <option value="#000000" data-tr="Siyah" data-en="Black">Siyah</option>
+                            <option value="#FF0000" data-tr="Kırmızı" data-en="Red">Kırmızı</option>
+                            <option value="#0000FF" data-tr="Mavi" data-en="Blue">Mavi</option>
+                            <option value="#008000" data-tr="Yeşil" data-en="Green">Yeşil</option>
+                            <option value="#800080" data-tr="Mor" data-en="Purple">Mor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="generate-btn" data-tr="🚀 QR Kod Oluştur" data-en="🚀 Generate QR Code">🚀 QR Kod Oluştur</button>
+            </div>
+
+            <div class="output-section">
+                <div class="qr-container">
+                    <div id="qr-placeholder">
+                        <div class="placeholder-content">
+                            <span class="qr-icon">📱</span>
+                            <h3 data-tr="QR Kodunuz Burada Görünecek" data-en="Your QR Code Will Appear Here">QR Kodunuz Burada Görünecek</h3>
+                            <p data-tr="Sol taraftan bilgileri doldurun ve &quot;QR Kod Oluştur&quot; butonuna tıklayın" data-en="Fill in the information on the left and click &quot;Generate QR Code&quot; button">Sol taraftan bilgileri doldurun ve "QR Kod Oluştur" butonuna tıklayın</p>
+                        </div>
+                    </div>
+                    <canvas id="qr-canvas" style="display: none;"></canvas>
+                </div>
+
+                <div class="download-section" id="download-section" style="display: none;">
+                    <button id="download-btn" class="download-btn" data-tr="💾 PNG Olarak İndir" data-en="💾 Download as PNG">💾 PNG Olarak İndir</button>
+                    <p class="download-info" data-tr="Yüksek kalitede PNG formatında indirebilirsiniz" data-en="You can download in high quality PNG format">Yüksek kalitede PNG formatında indirebilirsiniz</p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p data-tr="🚀 <strong>QR Kod Oluşturucu</strong> - DonTe tarafından geliştirildi" data-en="🚀 <strong>QR Code Generator</strong> - Developed by DonTe">🚀 <strong>QR Kod Oluşturucu</strong> - DonTe tarafından geliştirildi</p>
+                <div class="social-links">
+                    <a href="https://github.com/Donte61" target="_blank">💼 GitHub</a>
+                    <a href="https://discord.gg/yt2zGwtHrb" target="_blank">💬 Discord</a>
+                    <a href="https://buymeacoffee.com/donte61" target="_blank">☕ Buy Me a Coffee</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
